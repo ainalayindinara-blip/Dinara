@@ -1,0 +1,777 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GREEN-API Console</title>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #0a0f0d;
+      --surface: #101a14;
+      --surface2: #162019;
+      --border: #1e3024;
+      --border2: #264030;
+      --green: #25d366;
+      --green-dim: #1a9e49;
+      --green-glow: rgba(37, 211, 102, 0.15);
+      --green-glow2: rgba(37, 211, 102, 0.06);
+      --text: #e8f5ec;
+      --text-muted: #6b8f74;
+      --text-dim: #3d5e47;
+      --accent: #00ff88;
+      --error: #ff4d6a;
+      --warning: #ffb800;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'JetBrains Mono', monospace;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* Background grid */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(37,211,102,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(37,211,102,0.03) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* Glow orb */
+    body::after {
+      content: '';
+      position: fixed;
+      top: -200px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 800px;
+      height: 500px;
+      background: radial-gradient(ellipse, rgba(37,211,102,0.08) 0%, transparent 70%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ── Header ── */
+    header {
+      position: relative;
+      z-index: 10;
+      padding: 24px 40px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      background: rgba(10, 15, 13, 0.8);
+      backdrop-filter: blur(12px);
+      animation: slideDown 0.6s ease both;
+    }
+
+    .logo-mark {
+      width: 36px;
+      height: 36px;
+      background: var(--green);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Syne', sans-serif;
+      font-weight: 800;
+      font-size: 14px;
+      color: #000;
+      flex-shrink: 0;
+      box-shadow: 0 0 20px rgba(37,211,102,0.4);
+    }
+
+    .header-title {
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+      font-size: 18px;
+      color: var(--text);
+      letter-spacing: -0.3px;
+    }
+
+    .header-subtitle {
+      font-size: 11px;
+      color: var(--text-muted);
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
+
+    .header-badge {
+      margin-left: auto;
+      padding: 4px 10px;
+      border: 1px solid var(--border2);
+      border-radius: 20px;
+      font-size: 10px;
+      color: var(--green);
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+
+    /* ── Main layout ── */
+    .container {
+      position: relative;
+      z-index: 1;
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 40px 24px 60px;
+      display: grid;
+      grid-template-columns: 380px 1fr;
+      gap: 24px;
+      align-items: start;
+      animation: fadeUp 0.7s 0.2s ease both;
+    }
+
+    /* ── Panel base ── */
+    .panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      overflow: hidden;
+    }
+
+    .panel-header {
+      padding: 14px 20px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--surface2);
+    }
+
+    .panel-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--border2);
+    }
+    .panel-dot.green { background: var(--green); box-shadow: 0 0 6px var(--green); }
+
+    .panel-title {
+      font-family: 'Syne', sans-serif;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .panel-body {
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    /* ── Credentials section ── */
+    .section-label {
+      font-size: 10px;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      margin-bottom: 6px;
+    }
+
+    .input-group {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .input-label {
+      font-size: 11px;
+      color: var(--text-muted);
+      letter-spacing: 0.3px;
+    }
+
+    .input-field {
+      background: rgba(0,0,0,0.3);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 14px;
+      color: var(--text);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      width: 100%;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .input-field:focus {
+      border-color: var(--green-dim);
+      box-shadow: 0 0 0 3px var(--green-glow);
+    }
+
+    .input-field::placeholder { color: var(--text-dim); }
+
+    /* ── Divider ── */
+    .divider {
+      height: 1px;
+      background: var(--border);
+      margin: 4px 0;
+    }
+
+    /* ── Buttons ── */
+    .btn {
+      width: 100%;
+      padding: 11px 16px;
+      border-radius: 8px;
+      border: 1px solid var(--border2);
+      background: var(--surface2);
+      color: var(--green);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      letter-spacing: 0.3px;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .btn::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: var(--green-glow2);
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+
+    .btn:hover {
+      border-color: var(--green);
+      color: var(--accent);
+      box-shadow: 0 0 16px var(--green-glow), inset 0 0 20px var(--green-glow2);
+      transform: translateY(-1px);
+    }
+
+    .btn:hover::before { opacity: 1; }
+
+    .btn:active {
+      transform: translateY(0);
+      box-shadow: none;
+    }
+
+    .btn.loading {
+      pointer-events: none;
+      opacity: 0.7;
+    }
+
+    .btn-icon {
+      font-size: 14px;
+      opacity: 0.8;
+    }
+
+    /* ── Send section ── */
+    .send-section {
+      background: rgba(0,0,0,0.2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .send-section-title {
+      font-size: 11px;
+      color: var(--green-dim);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .send-section-title::before {
+      content: '';
+      width: 4px;
+      height: 4px;
+      border-radius: 50%;
+      background: var(--green);
+      flex-shrink: 0;
+    }
+
+    textarea.input-field {
+      resize: vertical;
+      min-height: 72px;
+      line-height: 1.5;
+    }
+
+    /* ── Right panel (response) ── */
+    .response-panel {
+      position: sticky;
+      top: 24px;
+    }
+
+    .response-area {
+      min-height: 500px;
+      padding: 20px;
+      font-size: 12.5px;
+      line-height: 1.7;
+      color: var(--text-muted);
+      font-family: 'JetBrains Mono', monospace;
+      overflow-y: auto;
+      background: rgba(0,0,0,0.25);
+      position: relative;
+    }
+
+    .response-area:empty::before {
+      content: '// Здесь будут отображаться ответы API\n// Нажмите на любую кнопку слева';
+      color: var(--text-dim);
+      white-space: pre;
+      display: block;
+    }
+
+    .response-block {
+      margin-bottom: 20px;
+      animation: fadeIn 0.4s ease both;
+    }
+
+    .response-block:last-child { margin-bottom: 0; }
+
+    .response-meta {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    .response-method {
+      font-family: 'Syne', sans-serif;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--green);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .response-time {
+      font-size: 10px;
+      color: var(--text-dim);
+    }
+
+    .response-status {
+      margin-left: auto;
+      font-size: 10px;
+      padding: 2px 8px;
+      border-radius: 4px;
+    }
+
+    .response-status.ok {
+      background: rgba(37,211,102,0.12);
+      color: var(--green);
+      border: 1px solid rgba(37,211,102,0.25);
+    }
+
+    .response-status.error {
+      background: rgba(255,77,106,0.12);
+      color: var(--error);
+      border: 1px solid rgba(255,77,106,0.25);
+    }
+
+    .response-json {
+      background: rgba(0,0,0,0.4);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--green-dim);
+      border-radius: 6px;
+      padding: 14px;
+      white-space: pre-wrap;
+      word-break: break-all;
+      font-size: 12px;
+      line-height: 1.8;
+      color: var(--text);
+      max-height: 260px;
+      overflow-y: auto;
+    }
+
+    /* JSON syntax highlight */
+    .json-key { color: #7dd3a8; }
+    .json-string { color: #a8d8b0; }
+    .json-number { color: #ffd380; }
+    .json-bool { color: #ff9f6b; }
+    .json-null { color: var(--text-muted); }
+
+    /* ── Loader spinner ── */
+    .spinner {
+      display: inline-block;
+      width: 14px;
+      height: 14px;
+      border: 2px solid var(--border2);
+      border-top-color: var(--green);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+
+    /* ── Status indicator ── */
+    .status-bar {
+      padding: 10px 20px;
+      border-top: 1px solid var(--border);
+      background: var(--surface2);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 11px;
+      color: var(--text-dim);
+    }
+
+    .status-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--text-dim);
+      flex-shrink: 0;
+    }
+
+    .status-dot.active {
+      background: var(--green);
+      box-shadow: 0 0 6px var(--green);
+      animation: pulse 2s infinite;
+    }
+
+    /* ── Clear button ── */
+    .clear-btn {
+      background: none;
+      border: none;
+      color: var(--text-dim);
+      cursor: pointer;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      padding: 4px 8px;
+      border-radius: 4px;
+      transition: all 0.2s;
+      margin-left: auto;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .clear-btn:hover { color: var(--error); background: rgba(255,77,106,0.08); }
+
+    /* ── Animations ── */
+    @keyframes slideDown {
+      from { opacity: 0; transform: translateY(-16px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateX(-8px); }
+      to   { opacity: 1; transform: translateX(0); }
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+
+    /* ── Scrollbar ── */
+    ::-webkit-scrollbar { width: 4px; height: 4px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--green-dim); }
+
+    /* ── Responsive ── */
+    @media (max-width: 760px) {
+      .container { grid-template-columns: 1fr; }
+      .response-panel { position: static; }
+      header { padding: 16px 20px; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo-mark">GA</div>
+  <div>
+    <div class="header-title">GREEN-API Console</div>
+    <div class="header-subtitle">WhatsApp API · Developer Interface</div>
+  </div>
+  <div class="header-badge">v1.0</div>
+</header>
+
+<div class="container">
+
+  <!-- LEFT: Controls -->
+  <div class="panel">
+    <div class="panel-header">
+      <div class="panel-dot green"></div>
+      <div class="panel-dot"></div>
+      <div class="panel-dot"></div>
+      <span class="panel-title" style="margin-left:6px;">Параметры и методы</span>
+    </div>
+    <div class="panel-body">
+
+      <!-- Credentials -->
+      <div>
+        <div class="section-label">Подключение к инстансу</div>
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          <div class="input-group">
+            <span class="input-label">idInstance</span>
+            <input id="idInstance" class="input-field" type="text" placeholder="Введите ID инстанса" />
+          </div>
+          <div class="input-group">
+            <span class="input-label">ApiTokenInstance</span>
+            <input id="apiToken" class="input-field" type="text" placeholder="Введите API токен" />
+          </div>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <!-- Info methods -->
+      <div>
+        <div class="section-label">Методы инстанса</div>
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          <button class="btn" onclick="callGetSettings()">
+            <span class="btn-icon">⚙</span> getSettings
+          </button>
+          <button class="btn" onclick="callGetStateInstance()">
+            <span class="btn-icon">◉</span> getStateInstance
+          </button>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <!-- sendMessage -->
+      <div class="send-section">
+        <div class="send-section-title">sendMessage</div>
+        <div class="input-group">
+          <span class="input-label">Номер получателя</span>
+          <input id="chatId" class="input-field" type="text" placeholder="77771234567" />
+        </div>
+        <div class="input-group">
+          <span class="input-label">Текст сообщения</span>
+          <textarea id="message" class="input-field" placeholder="Hello World!"></textarea>
+        </div>
+        <button class="btn" onclick="callSendMessage()">
+          <span class="btn-icon">✉</span> sendMessage
+        </button>
+      </div>
+
+      <!-- sendFileByUrl -->
+      <div class="send-section">
+        <div class="send-section-title">sendFileByUrl</div>
+        <div class="input-group">
+          <span class="input-label">Номер получателя</span>
+          <input id="fileChatId" class="input-field" type="text" placeholder="77771234567" />
+        </div>
+        <div class="input-group">
+          <span class="input-label">URL файла</span>
+          <input id="fileUrl" class="input-field" type="text" placeholder="https://my.site.com/img/file.png" />
+        </div>
+        <div class="input-group">
+          <span class="input-label">Имя файла</span>
+          <input id="fileName" class="input-field" type="text" placeholder="file.png" />
+        </div>
+        <div class="input-group">
+          <span class="input-label">Подпись (необязательно)</span>
+          <input id="fileCaption" class="input-field" type="text" placeholder="Описание файла" />
+        </div>
+        <button class="btn" onclick="callSendFileByUrl()">
+          <span class="btn-icon">⬆</span> sendFileByUrl
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- RIGHT: Response -->
+  <div class="panel response-panel">
+    <div class="panel-header">
+      <div class="panel-dot green"></div>
+      <div class="panel-dot"></div>
+      <div class="panel-dot"></div>
+      <span class="panel-title" style="margin-left:6px;">Ответ</span>
+      <button class="clear-btn" onclick="clearResponse()">очистить</button>
+    </div>
+    <div class="response-area" id="responseArea"></div>
+    <div class="status-bar">
+      <div class="status-dot" id="statusDot"></div>
+      <span id="statusText">Ожидание запроса</span>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  const BASE = 'https://api.green-api.com';
+
+  function getId()   { return document.getElementById('idInstance').value.trim(); }
+  function getToken(){ return document.getElementById('apiToken').value.trim(); }
+
+  function setStatus(text, active = false) {
+    document.getElementById('statusText').textContent = text;
+    const dot = document.getElementById('statusDot');
+    dot.className = 'status-dot' + (active ? ' active' : '');
+  }
+
+  function formatNumber(num) {
+    const s = String(num).replace(/\D/g, '');
+    return s.endsWith('@c.us') ? s : s + '@c.us';
+  }
+
+  function syntaxHighlight(json) {
+    if (typeof json !== 'string') json = JSON.stringify(json, null, 2);
+    return json.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, (match) => {
+      let cls = 'json-number';
+      if (/^"/.test(match)) cls = /:$/.test(match) ? 'json-key' : 'json-string';
+      else if (/true|false/.test(match)) cls = 'json-bool';
+      else if (/null/.test(match)) cls = 'json-null';
+      return `<span class="${cls}">${match}</span>`;
+    });
+  }
+
+  function addResponse(method, data, ok = true) {
+    const area = document.getElementById('responseArea');
+    const now = new Date().toLocaleTimeString('ru-RU');
+
+    let jsonStr;
+    try { jsonStr = typeof data === 'string' ? data : JSON.stringify(data, null, 2); }
+    catch(e) { jsonStr = String(data); }
+
+    const block = document.createElement('div');
+    block.className = 'response-block';
+    block.innerHTML = `
+      <div class="response-meta">
+        <span class="response-method">${method}</span>
+        <span class="response-time">${now}</span>
+        <span class="response-status ${ok ? 'ok' : 'error'}">${ok ? '200 OK' : 'ERROR'}</span>
+      </div>
+      <pre class="response-json">${syntaxHighlight(jsonStr)}</pre>
+    `;
+    area.appendChild(block);
+    area.scrollTop = area.scrollHeight;
+  }
+
+  function clearResponse() {
+    document.getElementById('responseArea').innerHTML = '';
+    setStatus('Ожидание запроса', false);
+  }
+
+  function setLoading(btn, loading) {
+    if (loading) {
+      btn._orig = btn.innerHTML;
+      btn.innerHTML = '<span class="spinner"></span> Загрузка...';
+      btn.classList.add('loading');
+    } else {
+      btn.innerHTML = btn._orig;
+      btn.classList.remove('loading');
+    }
+  }
+
+  async function apiGet(endpoint) {
+    const id = getId(), token = getToken();
+    if (!id || !token) { alert('Заполните idInstance и ApiTokenInstance'); return null; }
+    const url = `${BASE}/waInstance${id}/${endpoint}/${token}`;
+    const res = await fetch(url);
+    return res.json();
+  }
+
+  async function apiPost(endpoint, body) {
+    const id = getId(), token = getToken();
+    if (!id || !token) { alert('Заполните idInstance и ApiTokenInstance'); return null; }
+    const url = `${BASE}/waInstance${id}/${endpoint}/${token}`;
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+    return res.json();
+  }
+
+  async function callGetSettings() {
+    const btn = event.currentTarget;
+    setLoading(btn, true);
+    setStatus('Запрос getSettings...', true);
+    try {
+      const data = await apiGet('getSettings');
+      if (data) addResponse('getSettings', data, !data.error);
+      setStatus('getSettings выполнен', false);
+    } catch(e) {
+      addResponse('getSettings', { error: e.message }, false);
+      setStatus('Ошибка', false);
+    }
+    setLoading(btn, false);
+  }
+
+  async function callGetStateInstance() {
+    const btn = event.currentTarget;
+    setLoading(btn, true);
+    setStatus('Запрос getStateInstance...', true);
+    try {
+      const data = await apiGet('getStateInstance');
+      if (data) addResponse('getStateInstance', data, !data.error);
+      setStatus('getStateInstance выполнен', false);
+    } catch(e) {
+      addResponse('getStateInstance', { error: e.message }, false);
+      setStatus('Ошибка', false);
+    }
+    setLoading(btn, false);
+  }
+
+  async function callSendMessage() {
+    const btn = event.currentTarget;
+    const chatId = document.getElementById('chatId').value.trim();
+    const message = document.getElementById('message').value.trim();
+    if (!chatId || !message) { alert('Заполните номер и текст сообщения'); return; }
+    setLoading(btn, true);
+    setStatus('Отправка сообщения...', true);
+    try {
+      const data = await apiPost('sendMessage', {
+        chatId: formatNumber(chatId),
+        message
+      });
+      if (data) addResponse('sendMessage', data, !data.error);
+      setStatus('sendMessage выполнен', false);
+    } catch(e) {
+      addResponse('sendMessage', { error: e.message }, false);
+      setStatus('Ошибка', false);
+    }
+    setLoading(btn, false);
+  }
+
+  async function callSendFileByUrl() {
+    const btn = event.currentTarget;
+    const chatId  = document.getElementById('fileChatId').value.trim();
+    const fileUrl = document.getElementById('fileUrl').value.trim();
+    const fileName= document.getElementById('fileName').value.trim();
+    const caption = document.getElementById('fileCaption').value.trim();
+    if (!chatId || !fileUrl || !fileName) { alert('Заполните номер, URL и имя файла'); return; }
+    setLoading(btn, true);
+    setStatus('Отправка файла...', true);
+    try {
+      const data = await apiPost('sendFileByUrl', {
+        chatId: formatNumber(chatId),
+        urlFile: fileUrl,
+        fileName,
+        caption
+      });
+      if (data) addResponse('sendFileByUrl', data, !data.error);
+      setStatus('sendFileByUrl выполнен', false);
+    } catch(e) {
+      addResponse('sendFileByUrl', { error: e.message }, false);
+      setStatus('Ошибка', false);
+    }
+    setLoading(btn, false);
+  }
+</script>
+
+</body>
+</html>
